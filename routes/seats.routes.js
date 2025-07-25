@@ -16,55 +16,25 @@ router.route('/seats').get((req, res) => {
     res.json(db.seats);
 });
 
-router.route('/seats/:id').get((req, res) => {
-    const id = req.params.id;
-
-    if (id === 'random') {
-        const id = Math.floor(Math.random() * db.seats.length)
-        res.json(db.seats[id])
-    } else {
-        res.json(db.seats.filter(el => String(el.id) === id));
-    }
-
-});
-
-router.route('/seats').post((req, res, next) => {
+router.route('/seats').post((req, res) => {
     const newEntry = {}
     newEntry.id = uuidv4()
 
-    if (!req.body.author || !req.body.text) {
+    if (!req.body.seat || !req.body.client || !req.body.email || !req.body.day) {
         return res.status(400).json({ message: 'Wrong data' });
     }
 
-    newEntry.author = req.body.author
-    newEntry.text = req.body.text
+    if (db.seats.find(el => el.seat === req.body.seat)) {
+        return res.status(400).json({ message: "The slot is already taken..." });
+    }
+
+    newEntry.seat = req.body.seat
+    newEntry.client = req.body.client
+    newEntry.day = req.body.day
+    newEntry.email = req.body.email
     db.seats.push(newEntry)
 
     saveDbToFile(db)
-    res.json({ message: 'OK' })
-})
-
-router.route('/seats').put((req, res) => {
-    const id = req.body.id
-    const entry = db.seats.find(el => el.id === id)
-
-    if (!entry) {
-        return res.status(404).json({ message: 'Seat not found' });
-    }
-
-    entry.author = req.body.author
-    entry.text = req.body.text
-
-    saveDbToFile(db)
-    res.json({ message: 'OK' })
-})
-
-router.route('/seats/:id').delete((req, res) => {
-    const id = req.params.id;
-
-    db.seats = db.seats.filter(el => String(el.id) !== id)
-    saveDbToFile(db)
-
     res.json({ message: 'OK' })
 })
 
